@@ -1,0 +1,25 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Grab latest adblock hosts and convert it to Surge Rule-Set
+      run: curl -s -L https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts | grep '^0.0.0.0' | grep -v '0.0.0.0 0.0.0.0$' | grep -v '#\[.*affect' | awk '{print "DOMAIN, " $2}' > ./adblock.conf
+    - name: Commit files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Actions"
+        git add .
+        git commit -m "Updates hosts" -a || exit 0
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      with:
+        github_token: ${{ secrets.REPO_TOKEN }}
