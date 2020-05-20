@@ -15,7 +15,7 @@ jobs:
       run: |
         curl -s -L -o ./adblock.hosts.new https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
         if [[ `diff -uNrpw ./adblock.hosts ./adblock.hosts.new` ]]; then
-            cat ./adblock.hosts | grep '^0.0.0.0' | grep -v '0.0.0.0 0.0.0.0$' | grep -v '#\[.*affect' | awk '{print "DOMAIN, " $2}' > ./adblock.conf && echo "::set-env name=run_continue::true"
+            cat ./adblock.hosts.new | grep '^0.0.0.0' | grep -v '0.0.0.0 0.0.0.0$' | grep -v '#\[.*affect' | awk '{print "DOMAIN, " $2}' > ./adblock.conf && echo "::set-env name=run_continue::true"
         fi
         mv ./adblock.hosts.new ./adblock.hosts
     - name: Commit files
