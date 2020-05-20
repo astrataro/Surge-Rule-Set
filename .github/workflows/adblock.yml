@@ -13,9 +13,9 @@ jobs:
     - uses: actions/checkout@master
     - name: Grab latest adblock hosts and convert it to Surge Rule-Set
       run: |
-        echo "::set-env name=run_continue::true"
         curl -s -L -o ./adblock.hosts.new https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
-        if [[ `diff -uNrpw ./adblock.hosts ./adblock.hosts.new` ]]; then
+        # if [[ `diff -uNrpw ./adblock.hosts ./adblock.hosts.new` ]]; then
+        if true; then
             cat ./adblock.hosts.new | grep '^0.0.0.0' | grep -v '0.0.0.0 0.0.0.0$' | grep -v '#\[.*affect' | awk '{print $2}' > ./adblock.tmp || exit 1
             for line in $(cat ./adblock.tmp); do
                 if [[ `cat ./adblock.tmp | grep -P ".+\.$line"` ]]; then
