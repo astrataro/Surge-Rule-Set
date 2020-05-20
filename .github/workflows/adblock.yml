@@ -14,18 +14,23 @@ jobs:
     - name: Grab latest adblock hosts and convert it to Surge Rule-Set
       run: |
         curl -s -L -o ./adblock.hosts.new https://raw.githubusercontent.com/StevenBlack/hosts/master/hosts
-        # if [[ `diff -uNrpw ./adblock.hosts ./adblock.hosts.new` ]]; then
-        if true; then
-            cat ./adblock.hosts.new | grep '^0.0.0.0' | grep -v '0.0.0.0 0.0.0.0$' | grep -v '#\[.*affect' | awk '{print $2}' > ./adblock.tmp || exit 1
-            for line in $(cat ./adblock.tmp); do
-                if [[ `cat ./adblock.tmp | grep -P ".+\.$line"` ]]; then
-                    sed -i "/.$line/d" ./adblock.tmp
-                    sed -i "s/^$line$/DOMAIN-SUFFIX, $line/g" ./adblock.tmp
+        if [[ `diff -uNrpw ./adblock.hosts ./adblock.hosts.new` ]]; then
+            CURRENT_DIR=$(pwd)
+            # Use RAMDISK to speed up sed process
+            sudo mkdir /mnt/ramdisk
+            sudo mount -t tmpfs -o rw,size=2G tmpfs /mnt/ramdisk
+            cat ./adblock.hosts.new | grep '^0.0.0.0' | grep -v '0.0.0.0 0.0.0.0$' | grep -v '#\[.*affect' | awk '{print $2}' > /mnt/ramdisk/adblock.tmp || exit 1
+            cd /mnt/ramdisk
+            for line in $(cat /mnt/ramdisk/adblock.tmp); do
+                if [[ `cat /mnt/ramdisk/adblock.tmp | grep -P ".+\.$line"` ]]; then
+                    sed -i "/.$line/d" /mnt/ramdisk/adblock.tmp
+                    sed -i "s/^$line$/DOMAIN-SUFFIX, $line/g" /mnt/ramdisk/adblock.tmp
                 else
-                    sed -i "s/^$line$/DOMAIN, $line/g" ./adblock.tmp
+                    sed -i "s/^$line$/DOMAIN, $line/g" /mnt/ramdisk/adblock.tmp
                 fi
             done
-            mv ./adblock.tmp ./adblock.conf
+            mv /mnt/ramdisk/adblock.tmp ${CURRENT_DIR}/adblock.conf
+            cd ${CURRENT_DIR}
             echo "::set-env name=run_continue::true"
         fi
         mv ./adblock.hosts.new ./adblock.hosts
