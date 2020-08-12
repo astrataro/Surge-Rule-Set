@@ -1,0 +1,33 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Grab latest adblock hosts and convert it to Surge Rule-Set
+      run: |
+        curl -s -L -o ./netflix.hosts.new https://openconnect.netflix.com/mobiledeliverydomains.txt
+        if [[ `diff -uNrpw ./netflix.hosts ./netflix.hosts.new` ]]; then
+            sed 's/^\(.\)/DOMAIN-SUFFIX, \1/g' ./netflix.hosts.new > ./netflix.conf
+            echo "::set-env name=run_continue::true"
+        fi
+        mv ./netflix.hosts.new ./netflix.hosts
+    - name: Commit files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Actions"
+        git add .
+        git commit -m "Updates netflix" -a || echo "::set-env name=run_continue::false"
+      if: env.run_continue
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      if: env.run_continue
+      with:
+        github_token: ${{ secrets.REPO_TOKEN }}
