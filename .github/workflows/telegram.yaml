@@ -1,0 +1,34 @@
+name: CI
+
+on:
+  push:
+    branches: [ master ]
+  schedule:
+    - cron:  '0 0 * * *'
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@master
+    - name: Grab latest Telegram CIDR and convert it to Surge Rule-Set
+      run: |
+        curl -s -L -o ./telegram.cidr.new https://core.telegram.org/resources/cidr.txt
+        if [[ `diff -uNrpw ./telegram.cidr ./telegram.cidr.new` ]]; then
+            cat ./telegram.cidr.new | grep '\.' | sed 's/\t//g' | sed 's/^\(.\+\)$/IP-CIDR, \1, no-resolve/g' > ./telegram_cidr.conf
+            cat ./telegram.cidr.new | grep '\:' | sed 's/\t//g' | sed 's/^\(.\+\)$/IP-CIDR6, \1, no-resolve/g' >> ./telegram_cidr.conf
+            echo "::set-env name=run_continue::true"
+        fi
+        mv ./telegram.cidr.new ./telegram.cidr
+    - name: Commit files
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Actions"
+        git add .
+        git commit -m "Updates Telegram CIDR" -a || echo "::set-env name=run_continue::false"
+      if: env.run_continue
+    - name: Push changes
+      uses: ad-m/github-push-action@master
+      if: env.run_continue
+      with:
+        github_token: ${{ secrets.REPO_TOKEN }}
