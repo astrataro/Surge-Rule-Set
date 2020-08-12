@@ -11,7 +11,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@master
-    - name: Grab latest adblock hosts and convert it to Surge Rule-Set
+    - name: Grab latest Netflix domains and convert it to Surge Rule-Set
       run: |
         curl -s -L -o ./netflix.hosts.new https://openconnect.netflix.com/mobiledeliverydomains.txt
         if [[ `diff -uNrpw ./netflix.hosts ./netflix.hosts.new` ]]; then
@@ -24,7 +24,7 @@ jobs:
         git config --local user.email "action@github.com"
         git config --local user.name "GitHub Actions"
         git add .
-        git commit -m "Updates netflix" -a || echo "::set-env name=run_continue::false"
+        git commit -m "Updates Netflix" -a || echo "::set-env name=run_continue::false"
       if: env.run_continue
     - name: Push changes
       uses: ad-m/github-push-action@master
