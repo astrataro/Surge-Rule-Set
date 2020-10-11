@@ -13,12 +13,13 @@ jobs:
     - uses: actions/checkout@master
     - name: Grab latest Netflix domains and convert it to Surge Rule-Set
       run: |
-        curl -s -L -o ./netflix.hosts.new https://openconnect.netflix.com/mobiledeliverydomains.txt
-        if [[ `diff -uNrpw ./netflix.hosts ./netflix.hosts.new` ]]; then
-            sed 's/^\(.\)/DOMAIN-SUFFIX, \1/g' ./netflix.hosts.new > ./netflix.conf
+        curl -s -L -o ./netflix.hosts https://openconnect.netflix.com/mobiledeliverydomains.txt
+        if [[ `diff -uNrpw ./netflix.hosts ./netflix.conf` ]]; then
+            mv ./netflix.hosts ./netflix.conf
             echo "::set-env name=run_continue::true"
+        else
+            rm ./netflix.hosts            
         fi
-        mv ./netflix.hosts.new ./netflix.hosts
     - name: Commit files
       run: |
         git config --local user.email "action@github.com"
